@@ -76,11 +76,15 @@ async function startServer() {
         }
       });
 
-      const selectedModel = model || 'gemini-2.5-flash';
+      // Map model alias to valid Gemini model name if needed
+      let selectedModel = model || 'gemini-2.5-flash';
+      if (selectedModel === 'gemini-3.6-flash') {
+        selectedModel = 'gemini-2.5-flash';
+      }
 
-      // Format messages into Gemini contents structure (limiting history to last 10 messages for speed)
-      const recentMessages = (messages || []).slice(-10);
-      const formattedContents = recentMessages.map((msg: { role: string; content: string }) => ({
+      // Format FULL message history into Gemini contents structure without limits
+      const allMessages = messages || [];
+      const formattedContents = allMessages.map((msg: { role: string; content: string }) => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: msg.content }]
       }));
@@ -96,7 +100,6 @@ async function startServer() {
         contents: formattedContents.length > 0 ? formattedContents : 'Hello',
         config: {
           systemInstruction: combinedInstruction,
-          maxOutputTokens: 1200,
           temperature: 0.7
         }
       });
