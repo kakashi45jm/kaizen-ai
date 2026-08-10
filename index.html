@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Kaizen AI by jmcruz</title>
+  <style>
+    /* Legacy CSS for iOS 9 Safari (No CSS Grid, basic positioning & floats) */
+    * {
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #e5e5ea;
+      color: #000000;
+    }
+
+    /* Fixed App Layout Container */
+    #app-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f2f2f7;
+    }
+
+    /* Top Navigation Header */
+    #app-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      background-color: #007aff;
+      color: #ffffff;
+      line-height: 54px;
+      padding: 0 12px;
+      border-bottom: 1px solid #0051a8;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #header-title {
+      float: left;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: -0.3px;
+    }
+
+    #header-status {
+      float: left;
+      margin-left: 10px;
+      font-size: 12px;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      line-height: 18px;
+      margin-top: 18px;
+    }
+
+    #header-actions {
+      float: right;
+    }
+
+    .btn-header {
+      background-color: #ffffff;
+      color: #007aff;
+      border: none;
+      padding: 6px 14px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: 6px;
+      line-height: 20px;
+      margin-top: 11px;
+    }
+
+    .btn-header:active {
+      background-color: #d0d0d5;
+    }
+
+    /* Chat Messages Viewport */
+    #chat-viewport {
+      position: absolute;
+      top: 54px;
+      bottom: 70px;
+      left: 0;
+      right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS 9 */
+      padding: 12px 16px;
+      background-color: #e5e5ea;
+    }
+
+    .clear-fix {
+      clear: both;
+      height: 1px;
+    }
+
+    /* Chat Message Bubbles */
+    .message-row {
+      width: 100%;
+      margin-bottom: 14px;
+      clear: both;
+    }
+
+    .message-bubble {
+      max-width: 82%;
+      padding: 10px 14px;
+      font-size: 16px;
+      line-height: 1.45;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    }
+
+    .user-row .message-bubble {
+      float: right;
+      background-color: #007aff;
+      color: #ffffff;
+      border-radius: 18px 18px 4px 18px;
+      text-align: left;
+    }
+
+    .ai-row .message-bubble {
+      float: left;
+      background-color: #ffffff;
+      color: #000000;
+      border-radius: 18px 18px 18px 4px;
+      border: 1px solid #d1d1d6;
+    }
+
+    .system-row {
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .system-bubble {
+      display: inline-block;
+      background-color: #d1d1d6;
+      color: #3a3a3c;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      max-width: 90%;
+    }
+
+    .meta-time {
+      font-size: 11px;
+      margin-top: 4px;
+      opacity: 0.75;
+      text-align: right;
+    }
+
+    .ai-row .meta-time {
+      text-align: left;
+      color: #8e8e93;
+    }
+
+    .copy-btn {
+      display: inline-block;
+      font-size: 11px;
+      color: #007aff;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 4px;
+      padding: 2px 4px;
+      font-weight: bold;
+    }
+
+    /* Message Typography & Pre/Code formatting */
+    .message-bubble p {
+      margin-bottom: 6px;
+    }
+
+    .message-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-bubble pre {
+      background-color: #2c2c2e;
+      color: #30d158;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin: 6px 0;
+    }
+
+    .message-bubble code {
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      background-color: rgba(0,0,0,0.08);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .user-row .message-bubble code {
+      background-color: rgba(255,255,255,0.25);
+    }
+
+    /* Bottom Input Bar */
+    #app-input-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background-color: #ffffff;
+      border-top: 1px solid #c6c6c8;
+      padding: 10px 12px;
+      z-index: 100;
+    }
+
+    #chat-textarea {
+      float: left;
+      width: calc(100% - 94px);
+      height: 50px;
+      font-size: 16px; /* Must be 16px to prevent iOS Safari auto-zoom */
+      padding: 10px;
+      border: 1px solid #c7c7cc;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+    }
+
+    #chat-textarea:focus {
+      border-color: #007aff;
+      background-color: #ffffff;
+    }
+
+    #send-btn {
+      float: right;
+      width: 84px;
+      height: 50px;
+      background-color: #007aff;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #send-btn:active {
+      background-color: #0051a8;
+    }
+
+    #send-btn:disabled {
+      background-color: #b0b0b5;
+      cursor: not-allowed;
+    }
+
+    /* Settings Overlay Drawer / Modal */
+    #settings-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 20px 12px;
+    }
+
+    .modal-content {
+      max-width: 540px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e5ea;
+      color: #000;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #3a3a3c;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px; /* 16px prevents iOS zoom */
+      border: 1px solid #c7c7cc;
+      border-radius: 8px;
+      background-color: #f2f2f7;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: #007aff;
+      background-color: #ffffff;
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: #8e8e93;
+      margin-top: 4px;
+    }
+
+    .btn-block {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .btn-primary {
+      background-color: #007aff;
+      color: #ffffff;
+    }
+
+    .btn-primary:active {
+      background-color: #0051a8;
+    }
+
+    .btn-secondary {
+      background-color: #e5e5ea;
+      color: #000000;
+    }
+
+    .btn-danger {
+      background-color: #ff3b30;
+      color: #ffffff;
+    }
+
+    /* Diagnostics Log Box */
+    #diag-box {
+      display: none;
+      background-color: #1c1c1e;
+      color: #30d158;
+      font-family: Menlo, Monaco, monospace;
+      font-size: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Header -->
+    <div id="app-header">
+      <div id="header-title">Kaizen AI</div>
+      <div id="header-status">by jmcruz</div>
+      <div id="header-actions">
+        <button id="btn-open-settings" class="btn-header">⚙ Settings</button>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+
+    <!-- Chat Messages Scroll Container -->
+    <div id="chat-viewport">
+      <div id="messages-list">
+        <!-- Messages will be dynamically rendered here -->
+      </div>
+      <div id="scroll-anchor" class="clear-fix"></div>
+    </div>
+
+    <!-- Input Bar -->
+    <div id="app-input-bar">
+      <textarea id="chat-textarea" placeholder="Type a message to AI..." rows="1"></textarea>
+      <button id="send-btn">Send</button>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+
+  <!-- Settings Drawer / Modal -->
+  <div id="settings-modal">
+    <div class="modal-content">
+      <div class="modal-title">AI Engine Settings</div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-provider">API Provider / Route</label>
+        <select id="setting-provider" class="form-select">
+          <option value="server">Express Proxy (/api/chat) - Default</option>
+          <option value="gemini">Google Gemini REST API (Direct XHR)</option>
+          <option value="openai">OpenAI REST API (Direct XHR)</option>
+        </select>
+        <div class="form-hint">Direct XHR works directly from iPad Safari without CORS issues for Gemini.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-key">API Key</label>
+        <input type="password" id="setting-key" class="form-input" placeholder="Enter Gemini or OpenAI API Key">
+        <div class="form-hint">Key is saved in iPad localStorage. If using Express Proxy with server env key, you may leave this blank.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-model">Model Alias</label>
+        <select id="setting-model" class="form-select">
+          <option value="gemini-3.6-flash">gemini-3.6-flash (Fast & Recommended)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo (OpenAI)</option>
+          <option value="gpt-4o-mini">gpt-4o-mini (OpenAI)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-preset">System Preset</label>
+        <select id="setting-preset" class="form-select">
+          <option value="helpful">Helpful AI Assistant</option>
+          <option value="concise">Concise & Direct (Saves iPad Memory)</option>
+          <option value="code">Legacy Code Expert</option>
+          <option value="retro">Retro iPad Tech Enthusiast</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="setting-system">Custom System Instruction</label>
+        <textarea id="setting-system" class="form-textarea" rows="2" placeholder="You are a helpful assistant..."></textarea>
+      </div>
+
+      <button id="btn-test-connection" class="btn-block btn-secondary">⚡ Test XHR Connection</button>
+      <button id="btn-toggle-diag" class="btn-block btn-secondary">🔍 View Network Logs</button>
+      <div id="diag-box"></div>
+
+      <button id="btn-save-settings" class="btn-block btn-primary">Save & Apply</button>
+      <button id="btn-clear-chat" class="btn-block btn-danger">🗑 Clear Chat History</button>
+      <button id="btn-close-settings" class="btn-block btn-secondary">Close</button>
+    </div>
+  </div>
+
+  <!-- Pure ES5 Vanilla JavaScript for iOS 9.3.5 Compatibility -->
+  <script>
+    (function() {
+      'use strict';
+
+      // LocalStorage keys
+      var STORAGE_KEY_SETTINGS = 'ipad_ai_settings_v1';
+      var STORAGE_KEY_HISTORY = 'ipad_ai_history_v1';
+
+      // App State
+      var settings = {
+        provider: 'server',
+        apiKey: '',
+        model: 'gemini-2.5-flash',
+        preset: 'helpful',
+        systemPrompt: 'You are Kaizen AI, a fast and helpful AI assistant created by jmcruz. DO NOT use hashtags (#) or header hashes in your responses. Present information cleanly using bold text and bullet points.'
+      };
+
+      var chatHistory = [];
+      var isSending = false;
+
+      // DOM Elements
+      var messagesListEl = document.getElementById('messages-list');
+      var chatViewportEl = document.getElementById('chat-viewport');
+      var textareaEl = document.getElementById('chat-textarea');
+      var sendBtnEl = document.getElementById('send-btn');
+      
+      var settingsModalEl = document.getElementById('settings-modal');
+      var openSettingsBtnEl = document.getElementById('btn-open-settings');
+      var closeSettingsBtnEl = document.getElementById('btn-close-settings');
+      var saveSettingsBtnEl = document.getElementById('btn-save-settings');
+      var clearChatBtnEl = document.getElementById('btn-clear-chat');
+      var testConnectionBtnEl = document.getElementById('btn-test-connection');
+      var toggleDiagBtnEl = document.getElementById('btn-toggle-diag');
+      var diagBoxEl = document.getElementById('diag-box');
+
+      var providerSelectEl = document.getElementById('setting-provider');
+      var keyInputEl = document.getElementById('setting-key');
+      var modelSelectEl = document.getElementById('setting-model');
+      var presetSelectEl = document.getElementById('setting-preset');
+      var systemTextareaEl = document.getElementById('setting-system');
+      var headerStatusEl = document.getElementById('header-status');
+
+      // Helper: System Presets Map
+      var PRESETS = {
+        'helpful': 'You are Kaizen AI, a fast, clean, and helpful AI assistant created by jmcruz. Never use hashtags (#) in responses. Keep formatting neat and direct.',
+        'concise': 'Answer as concisely and quickly as possible using simple short bullet points without hashtags.',
+        'code': 'You are an expert legacy web developer. Provide clear code snippets in ES5 JavaScript, HTML, and basic CSS without hashtags.',
+        'retro': 'You are an enthusiastic retro tech enthusiast celebrating vintage Apple iPad hardware and iOS 9! No hashtags.'
+      };
+
+      // Logging helper
+      function logDiag(msg) {
+        var now = new Date();
+        var timeStr = now.getHours() + ':' + ('0' + now.getMinutes()).slice(-2) + ':' + ('0' + now.getSeconds()).slice(-2);
+        diagBoxEl.innerText = '[' + timeStr + '] ' + msg + '\n' + diagBoxEl.innerText;
+      }
+
+      // Safe HTML Escape
+      function escapeHtml(text) {
+        if (!text) return '';
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // Format Text with clean Markdown formatting (NO Hashtags, Clean Bold headers & Lists)
+      function formatMessageText(text) {
+        if (!text) return '';
+        
+        // 1. Strip all markdown header hashtags (# Heading -> Heading)
+        text = text.replace(/^#+\s*(.*)$/gm, '$1');
+        
+        // 2. Strip any remaining stray hashtags from hashtags or text (#topic -> topic, # -> '')
+        text = text.replace(/#([a-zA-Z0-9_]+)/g, '$1');
+        text = text.replace(/#/g, '');
+
+        var escaped = escapeHtml(text);
+        
+        // Code blocks: ```code```
+        escaped = escaped.replace(/```([\s\S]*?)```/g, function(match, p1) {
+          return '<pre><code>' + p1 + '</code></pre>';
+        });
+
+        // Inline code: `code`
+        escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Bold: **text** -> <strong>text</strong>
+        escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+        // Italic: *text* -> <em>text</em>
+        escaped = escaped.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+        // Bullet points: * item or - item -> • item
+        escaped = escaped.replace(/^[\*\-]\s+(.*)$/gm, '• $1');
+
+        // New lines -> <br>
+        escaped = escaped.replace(/\n/g, '<br>');
+
+        return escaped;
+      }
+
+      // Load Settings from LocalStorage
+      function loadSettings() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed.provider) settings.provider = parsed.provider;
+            if (parsed.apiKey !== undefined) settings.apiKey = parsed.apiKey;
+            if (parsed.model) settings.model = parsed.model;
+            if (parsed.preset) settings.preset = parsed.preset;
+            if (parsed.systemPrompt !== undefined) settings.systemPrompt = parsed.systemPrompt;
+          }
+        } catch (e) {
+          logDiag('Error loading settings: ' + e.message);
+        }
+
+        // Sync to UI controls
+        providerSelectEl.value = settings.provider;
+        keyInputEl.value = settings.apiKey;
+        modelSelectEl.value = settings.model;
+        presetSelectEl.value = settings.preset;
+        systemTextareaEl.value = settings.systemPrompt;
+        updateHeaderStatus();
+      }
+
+      // Save Settings to LocalStorage
+      function saveSettings() {
+        settings.provider = providerSelectEl.value;
+        settings.apiKey = keyInputEl.value.trim();
+        settings.model = modelSelectEl.value;
+        settings.preset = presetSelectEl.value;
+        settings.systemPrompt = systemTextareaEl.value.trim();
+
+        try {
+          localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+          logDiag('Settings saved successfully.');
+        } catch (e) {
+          logDiag('Failed to save settings: ' + e.message);
+        }
+
+        updateHeaderStatus();
+      }
+
+      function updateHeaderStatus() {
+        var pName = settings.provider === 'server' ? 'Proxy' : (settings.provider === 'gemini' ? 'Gemini' : 'OpenAI');
+        headerStatusEl.innerText = pName + ' (' + settings.model + ')';
+      }
+
+      // Load Chat History
+      function loadChatHistory() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+          if (raw) {
+            chatHistory = JSON.parse(raw);
+          }
+        } catch (e) {
+          chatHistory = [];
+        }
+
+        if (chatHistory.length === 0) {
+          // Welcome message
+          chatHistory.push({
+            role: 'system',
+            content: 'Kaizen AI Engine Initialized. Developed by jmcruz.',
+            time: formatTime(new Date())
+          });
+          chatHistory.push({
+            role: 'assistant',
+            content: 'Kamusta! Ako si Kaizen AI, nilikha ni jmcruz. Optimized ako para sa mabilis at malinis na pag-sagot sa iyong iPad Mini 2. Paano kita matutulungan ngayon?',
+            time: formatTime(new Date())
+          });
+        }
+
+        renderChatMessages();
+      }
+
+      // Save Chat History
+      function saveChatHistory() {
+        try {
+          // Limit to last 30 messages to keep iPad memory usage light
+          if (chatHistory.length > 30) {
+            chatHistory = chatHistory.slice(chatHistory.length - 30);
+          }
+          localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(chatHistory));
+        } catch (e) {
+          logDiag('Failed to save history: ' + e.message);
+        }
+      }
+
+      function formatTime(dateObj) {
+        var h = dateObj.getHours();
+        var m = dateObj.getMinutes();
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12;
+        h = h ? h : 12;
+        m = m < 10 ? '0' + m : m;
+        return h + ':' + m + ' ' + ampm;
+      }
+
+      // Render Messages
+      function renderChatMessages() {
+        messagesListEl.innerHTML = '';
+
+        for (var i = 0; i < chatHistory.length; i++) {
+          var msg = chatHistory[i];
+          var row = document.createElement('div');
+
+          if (msg.role === 'system') {
+            row.className = 'message-row system-row';
+            row.innerHTML = '<div class="system-bubble">' + escapeHtml(msg.content) + '</div>';
+          } else {
+            var isUser = msg.role === 'user';
+            row.className = 'message-row ' + (isUser ? 'user-row' : 'ai-row');
+            
+            var bubbleHtml = '<div class="message-bubble">';
+            bubbleHtml += formatMessageText(msg.content);
+            bubbleHtml += '<div class="meta-time">' + (msg.time || '') + '</div>';
+            if (!isUser) {
+              bubbleHtml += '<button class="copy-btn" data-idx="' + i + '">Copy</button>';
+            }
+            bubbleHtml += '</div>';
+
+            row.innerHTML = bubbleHtml;
+          }
+
+          messagesListEl.appendChild(row);
+        }
+
+        // Add copy button handlers
+        var copyBtns = messagesListEl.querySelectorAll('.copy-btn');
+        for (var j = 0; j < copyBtns.length; j++) {
+          copyBtns[j].addEventListener('click', function(e) {
+            var idx = e.target.getAttribute('data-idx');
+            if (chatHistory[idx]) {
+              copyToClipboard(chatHistory[idx].content);
+              e.target.innerText = 'Copied!';
+              setTimeout(function() { e.target.innerText = 'Copy'; }, 2000);
+            }
+          }, false);
+        }
+
+        scrollToBottom();
+      }
+
+      function copyToClipboard(text) {
+        var tempArea = document.createElement('textarea');
+        tempArea.value = text;
+        document.body.appendChild(tempArea);
+        tempArea.select();
+        try {
+          document.execCommand('copy');
+        } catch (err) {}
+        document.body.removeChild(tempArea);
+      }
+
+      function scrollToBottom() {
+        setTimeout(function() {
+          chatViewportEl.scrollTop = chatViewportEl.scrollHeight;
+        }, 50);
+      }
+
+      // Send Request via XMLHttpRequest
+      function sendAiRequest(userMessageText) {
+        if (isSending) return;
+        isSending = true;
+        sendBtnEl.disabled = true;
+        sendBtnEl.innerText = 'Sending...';
+
+        // Add user message
+        var nowStr = formatTime(new Date());
+        chatHistory.push({
+          role: 'user',
+          content: userMessageText,
+          time: nowStr
+        });
+
+        // Add pending AI message placeholder
+        var aiPlaceholderIndex = chatHistory.length;
+        chatHistory.push({
+          role: 'assistant',
+          content: 'Thinking...',
+          time: nowStr
+        });
+
+        renderChatMessages();
+        saveChatHistory();
+
+        // Construct Request based on Provider
+        var xhr = new XMLHttpRequest();
+        var requestUrl = '';
+        var payload = {};
+        var headers = [];
+
+        var effectiveKey = settings.apiKey;
+
+        if (settings.provider === 'server') {
+          requestUrl = '/api/chat';
+          headers.push({ name: 'Content-Type', value: 'application/json' });
+          payload = {
+            provider: 'gemini',
+            apiKey: effectiveKey,
+            model: settings.model,
+            messages: filterHistoryForApi(chatHistory, aiPlaceholderIndex),
+            systemInstruction: settings.systemPrompt
+          };
+        } else if (settings.provider === 'gemini') {
+          if (!effectiveKey) {
+            handleXhrError('Gemini API Key is missing. Please enter your key in Settings.');
+            return;
+          }
+          requestUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(settings.model) + ':generateContent?key=' + encodeURIComponent(effectiveKey);
+          headers.push({ name: 'Content-Type', value: 'application/json' });
+          payload = {
+            contents: formatGeminiContents(chatHistory, aiPlaceholderIndex)
+          };
+          if (settings.systemPrompt) {
+            payload.systemInstruction = { parts: [{ text: settings.systemPrompt }] };
+          }
+        } else if (settings.provider === 'openai') {
+          if (!effectiveKey) {
+            handleXhrError('OpenAI API Key is missing. Please enter your key in Settings.');
+            return;
+          }
+          requestUrl = 'https://api.openai.com/v1/chat/completions';
+          headers.push({ name: 'Content-Type', value: 'application/json' });
+          headers.push({ name: 'Authorization', value: 'Bearer ' + effectiveKey });
+          
+          var openAiMsgs = [];
+          if (settings.systemPrompt) {
+            openAiMsgs.push({ role: 'system', content: settings.systemPrompt });
+          }
+          var historyFiltered = filterHistoryForApi(chatHistory, aiPlaceholderIndex);
+          for (var k = 0; k < historyFiltered.length; k++) {
+            openAiMsgs.push({
+              role: historyFiltered[k].role === 'model' ? 'assistant' : historyFiltered[k].role,
+              content: historyFiltered[k].content
+            });
+          }
+
+          payload = {
+            model: settings.model.indexOf('gpt') === 0 ? settings.model : 'gpt-3.5-turbo',
+            messages: openAiMsgs
+          };
+        }
+
+        logDiag('Sending XHR to: ' + requestUrl);
+
+        xhr.open('POST', requestUrl, true);
+        
+        for (var h = 0; h < headers.length; h++) {
+          xhr.setRequestHeader(headers[h].name, headers[h].value);
+        }
+
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            isSending = false;
+            sendBtnEl.disabled = false;
+            sendBtnEl.innerText = 'Send';
+
+            logDiag('XHR Status: ' + xhr.status + ' ' + xhr.statusText);
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                var responseData = JSON.parse(xhr.responseText);
+                var replyText = extractReplyText(responseData, settings.provider);
+                chatHistory[aiPlaceholderIndex].content = replyText;
+                chatHistory[aiPlaceholderIndex].time = formatTime(new Date());
+                renderChatMessages();
+                saveChatHistory();
+              } catch (parseErr) {
+                handleXhrError('Failed to parse AI JSON response: ' + parseErr.message);
+              }
+            } else {
+              var errDetail = xhr.responseText || xhr.statusText || ('HTTP Code ' + xhr.status);
+              try {
+                var jsonErr = JSON.parse(xhr.responseText);
+                if (jsonErr.error && jsonErr.error.message) errDetail = jsonErr.error.message;
+                else if (jsonErr.error) errDetail = jsonErr.error;
+              } catch (e) {}
+              handleXhrError('API Request Failed: ' + errDetail, aiPlaceholderIndex);
+            }
+          }
+        };
+
+        xhr.onerror = function() {
+          isSending = false;
+          sendBtnEl.disabled = false;
+          sendBtnEl.innerText = 'Send';
+          handleXhrError('Network Error / CORS Issue. Check internet connection or API endpoint.', aiPlaceholderIndex);
+        };
+
+        try {
+          xhr.send(JSON.stringify(payload));
+        } catch (sendException) {
+          isSending = false;
+          sendBtnEl.disabled = false;
+          sendBtnEl.innerText = 'Send';
+          handleXhrError('Failed to send XHR request: ' + sendException.message, aiPlaceholderIndex);
+        }
+      }
+
+      function filterHistoryForApi(historyArr, excludeIdx) {
+        var clean = [];
+        for (var i = 0; i < historyArr.length; i++) {
+          if (i === excludeIdx) continue;
+          var item = historyArr[i];
+          if (item.role === 'user' || item.role === 'assistant' || item.role === 'model') {
+            clean.push({
+              role: item.role === 'assistant' ? 'model' : item.role,
+              content: item.content
+            });
+          }
+        }
+        // Limit context payload to last 8 messages for ultra-fast generation
+        if (clean.length > 8) {
+          clean = clean.slice(clean.length - 8);
+        }
+        return clean;
+      }
+
+      function formatGeminiContents(historyArr, excludeIdx) {
+        var contents = [];
+        var filtered = filterHistoryForApi(historyArr, excludeIdx);
+        for (var i = 0; i < filtered.length; i++) {
+          contents.push({
+            role: filtered[i].role === 'assistant' ? 'model' : filtered[i].role,
+            parts: [{ text: filtered[i].content }]
+          });
+        }
+        return contents;
+      }
+
+      function extractReplyText(data, provider) {
+        if (!data) return 'No response data.';
+        
+        if (provider === 'server') {
+          return data.reply || (data.raw && data.raw.choices && data.raw.choices[0].message.content) || 'No reply text returned.';
+        }
+
+        if (provider === 'gemini') {
+          if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+            return data.candidates[0].content.parts[0].text;
+          }
+          return 'No candidate content returned by Gemini.';
+        }
+
+        if (provider === 'openai') {
+          if (data.choices && data.choices[0] && data.choices[0].message) {
+            return data.choices[0].message.content;
+          }
+          return 'No choices content returned by OpenAI.';
+        }
+
+        return 'Unknown provider format.';
+      }
+
+      function handleXhrError(errMsg, targetIdx) {
+        logDiag('ERROR: ' + errMsg);
+        if (targetIdx !== undefined && chatHistory[targetIdx]) {
+          chatHistory[targetIdx].content = '⚠️ ' + errMsg;
+        } else {
+          chatHistory.push({
+            role: 'system',
+            content: '⚠️ ' + errMsg,
+            time: formatTime(new Date())
+          });
+        }
+        renderChatMessages();
+        saveChatHistory();
+      }
+
+      // Event Listeners Initialization
+      function initEvents() {
+        // Send Button Click
+        sendBtnEl.addEventListener('click', function() {
+          var val = textareaEl.value.trim();
+          if (val) {
+            textareaEl.value = '';
+            sendAiRequest(val);
+          }
+        }, false);
+
+        // Enter key to send (Shift+Enter for newline)
+        textareaEl.addEventListener('keydown', function(e) {
+          if (e.keyCode === 13 && !e.shiftKey) {
+            e.preventDefault();
+            var val = textareaEl.value.trim();
+            if (val) {
+              textareaEl.value = '';
+              sendAiRequest(val);
+            }
+          }
+        }, false);
+
+        // Open Settings Modal
+        openSettingsBtnEl.addEventListener('click', function() {
+          settingsModalEl.style.display = 'block';
+        }, false);
+
+        // Close Settings Modal
+        closeSettingsBtnEl.addEventListener('click', function() {
+          settingsModalEl.style.display = 'none';
+        }, false);
+
+        // Preset Change
+        presetSelectEl.addEventListener('change', function() {
+          var selectedVal = presetSelectEl.value;
+          if (PRESETS[selectedVal]) {
+            systemTextareaEl.value = PRESETS[selectedVal];
+          }
+        }, false);
+
+        // Save Settings
+        saveSettingsBtnEl.addEventListener('click', function() {
+          saveSettings();
+          settingsModalEl.style.display = 'none';
+          chatHistory.push({
+            role: 'system',
+            content: 'Settings updated successfully.',
+            time: formatTime(new Date())
+          });
+          renderChatMessages();
+        }, false);
+
+        // Clear Chat
+        clearChatBtnEl.addEventListener('click', function() {
+          if (confirm('Are you sure you want to clear the entire chat history?')) {
+            chatHistory = [{
+              role: 'system',
+              content: 'Chat history cleared.',
+              time: formatTime(new Date())
+            }];
+            saveChatHistory();
+            renderChatMessages();
+            settingsModalEl.style.display = 'none';
+          }
+        }, false);
+
+        // Test Connection
+        testConnectionBtnEl.addEventListener('click', function() {
+          logDiag('Testing XHR connection...');
+          var testXhr = new XMLHttpRequest();
+          var testProvider = providerSelectEl.value;
+          var testKey = keyInputEl.value.trim();
+
+          if (testProvider === 'server') {
+            testXhr.open('GET', '/api/health', true);
+            testXhr.onreadystatechange = function() {
+              if (testXhr.readyState === 4) {
+                if (testXhr.status === 200) {
+                  alert('✅ Server Proxy Connection Success!\nResponse: ' + testXhr.responseText);
+                } else {
+                  alert('❌ Connection Failed! Status: ' + testXhr.status);
+                }
+              }
+            };
+            testXhr.send();
+          } else {
+            alert('To test direct API connection, send a quick message in chat! Connection log is enabled.');
+          }
+        }, false);
+
+        // Toggle Diagnostic Logs Box
+        toggleDiagBtnEl.addEventListener('click', function() {
+          if (diagBoxEl.style.display === 'block') {
+            diagBoxEl.style.display = 'none';
+            toggleDiagBtnEl.innerText = '🔍 View Network Logs';
+          } else {
+            diagBoxEl.style.display = 'block';
+            toggleDiagBtnEl.innerText = '🙈 Hide Network Logs';
+          }
+        }, false);
+      }
+
+      // App Entry Point Initialization
+      loadSettings();
+      loadChatHistory();
+      initEvents();
+      logDiag('iPad Mini 2 Web Engine Ready.');
+
+    })();
+  </script>
+</body>
+</html>

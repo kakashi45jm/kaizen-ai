@@ -1,0 +1,6 @@
+{
+  "name": "Kaizen AI",
+  "description": "Lightweight self-contained AI chat web application Kaizen, created by jmcruz, specifically optimized for iOS 9.3.5 Safari on iPad Mini 2.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
