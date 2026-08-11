@@ -33,27 +33,43 @@ async function startServer() {
       // Use client-provided API key or server environment GEMINI_API_KEY
       const effectiveKey = apiKey || process.env.GEMINI_API_KEY;
 
-      if (provider === 'openai') {
-        if (!effectiveKey) {
-          return res.status(400).json({ error: 'OpenAI API key is required.' });
+      // Handle OpenAI ChatGPT Provider / GPT Models
+      if (provider === 'openai' || (model && typeof model === 'string' && model.startsWith('gpt'))) {
+        const openAiKey = apiKey || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
+        if (!openAiKey) {
+          return res.status(400).json({ error: 'OpenAI API Key is required. Please enter your OpenAI API key in Settings.' });
         }
         
-        // Proxy call to OpenAI API
+        const openAiMsgs: { role: string; content: string }[] = [];
+        const noHashtagInstruction = 'IMPORTANT: Do NOT use hashtags (#) or markdown header hashes in your responses. Keep responses clean, well-structured, and concise using simple bullet points or clear short paragraphs.';
+        const fullInstruction = systemInstruction ? `${systemInstruction}\n\n${noHashtagInstruction}` : noHashtagInstruction;
+
+        openAiMsgs.push({ role: 'system', content: fullInstruction });
+
+        (messages || []).forEach((msg: { role: string; content: string }) => {
+          openAiMsgs.push({
+            role: msg.role === 'model' ? 'assistant' : msg.role,
+            content: msg.content
+          });
+        });
+
+        const selectedGptModel = (model && model.startsWith('gpt')) ? model : 'gpt-3.5-turbo';
+
         const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${effectiveKey}`
+            'Authorization': `Bearer ${openAiKey}`
           },
           body: JSON.stringify({
-            model: model || 'gpt-3.5-turbo',
-            messages: messages || []
+            model: selectedGptModel,
+            messages: openAiMsgs
           })
         });
 
         const data = await openAiRes.json();
         if (!openAiRes.ok) {
-          return res.status(openAiRes.status).json({ error: data.error?.message || 'OpenAI API Error' });
+          return res.status(openAiRes.status).json({ error: data.error?.message || 'OpenAI API Request Failed' });
         }
 
         const reply = data.choices?.[0]?.message?.content || 'No response generated.';
@@ -76,10 +92,10 @@ async function startServer() {
         }
       });
 
-      // Map model alias to valid Gemini model name if needed
-      let selectedModel = model || 'gemini-2.5-flash';
-      if (selectedModel === 'gemini-3.6-flash') {
-        selectedModel = 'gemini-2.5-flash';
+      // Map model alias to active Gemini model name
+      let selectedModel = model || 'gemini-3.6-flash';
+      if (!selectedModel || selectedModel === 'gemini-2.5-flash' || selectedModel === 'gemini-1.5-flash' || selectedModel === 'gemini-2.0-flash' || selectedModel === 'gemini-3.6-flash') {
+        selectedModel = 'gemini-3.6-flash';
       }
 
       // Format FULL message history into Gemini contents structure without limits

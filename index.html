@@ -437,11 +437,12 @@
       <div class="form-group">
         <label class="form-label" for="setting-model">Model Selection</label>
         <select id="setting-model" class="form-select">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & Recommended)</option>
+          <option value="gemini-3.6-flash">gemini-3.6-flash (Fast & Recommended)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
           <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-          <option value="gpt-3.5-turbo">gpt-3.5-turbo (OpenAI)</option>
-          <option value="gpt-4o-mini">gpt-4o-mini (OpenAI)</option>
+          <option value="gpt-4o-mini">gpt-4o-mini (OpenAI ChatGPT)</option>
+          <option value="gpt-4o">gpt-4o (OpenAI ChatGPT)</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo (OpenAI ChatGPT)</option>
         </select>
       </div>
 
@@ -483,7 +484,7 @@
       var settings = {
         provider: 'server',
         apiKey: '',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
         preset: 'helpful',
         systemPrompt: 'You are Kaizen AI, a fast and helpful AI assistant created by jmcruz. DO NOT use hashtags (#) or header hashes in your responses. Present information cleanly using bold text and bullet points.'
       };
@@ -584,6 +585,9 @@
             if (parsed.provider) settings.provider = parsed.provider;
             if (parsed.apiKey !== undefined) settings.apiKey = parsed.apiKey;
             if (parsed.model) settings.model = parsed.model;
+            if (!settings.model || settings.model === 'gemini-2.5-flash' || settings.model === 'gemini-1.5-flash' || settings.model === 'gemini-2.0-flash') {
+              settings.model = 'gemini-3.6-flash';
+            }
             if (parsed.preset) settings.preset = parsed.preset;
             if (parsed.systemPrompt !== undefined) settings.systemPrompt = parsed.systemPrompt;
           }
@@ -765,18 +769,19 @@
         var headers = [];
 
         var effectiveKey = settings.apiKey;
-        var targetGeminiModel = settings.model || 'gemini-2.5-flash';
-        if (targetGeminiModel === 'gemini-3.6-flash') {
-          targetGeminiModel = 'gemini-2.5-flash';
+        var targetGeminiModel = settings.model || 'gemini-3.6-flash';
+        if (!targetGeminiModel || targetGeminiModel === 'gemini-2.5-flash' || targetGeminiModel === 'gemini-1.5-flash' || targetGeminiModel === 'gemini-2.0-flash') {
+          targetGeminiModel = 'gemini-3.6-flash';
         }
 
         if (settings.provider === 'server') {
           requestUrl = '/api/chat';
           headers.push({ name: 'Content-Type', value: 'application/json' });
+          var isGptModel = settings.model && settings.model.indexOf('gpt') === 0;
           payload = {
-            provider: 'gemini',
+            provider: isGptModel ? 'openai' : 'gemini',
             apiKey: effectiveKey,
-            model: targetGeminiModel,
+            model: isGptModel ? settings.model : targetGeminiModel,
             messages: filterHistoryForApi(chatHistory, aiPlaceholderIndex),
             systemInstruction: settings.systemPrompt
           };
